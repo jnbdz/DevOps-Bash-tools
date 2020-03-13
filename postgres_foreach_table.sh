@@ -19,6 +19,8 @@
 #
 # FILTER environment variable will restrict to matching fully qualified tables (<db>.<schema>.<table>)
 #
+# Auto-skips information_schema and pg_catalog schemas for safety
+#
 # Tested on AWS RDS PostgreSQL 9.5.15
 
 set -eu  # -o pipefail
@@ -36,7 +38,7 @@ shift
 # exit the loop subshell if you Control-C
 trap 'exit 130' INT
 
-"$srcdir/postgres_list_tables.sh" "$@" |
+AUTOFILTER=1 "$srcdir/postgres_list_tables.sh" "$@" |
 while read -r db schema table; do
     printf '%s.%s.%s\t' "$db" "$schema" "$table"
     query="${query_template//\{db\}/\"$db\"}"
@@ -44,4 +46,7 @@ while read -r db schema table; do
     query="${query//\{table\}/\"$table\"}"
     # doing \c $db is noisy
     "$srcdir/psql.sh" -q -t -d "$db" -c "$query" "$@"
-done
+    # weird situation on RDS PostgreSQL, hanging all night trying to select count(*) a table, happens on many tables, skip them like so and carry on
+    #timeout -k 10 60 "$srcdir/psql.sh" -q -t -d "$db" -c "$query" "$@" || echo
+done |
+sed '/^[[:space:]]*$/d'
