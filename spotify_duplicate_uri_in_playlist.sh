@@ -28,11 +28,11 @@ Lists duplicate Spotify URIs in a given playlist
 
 Playlist must be specified as the first argument and can be either a Spotify playlist ID or a full playlist name (see spotify_playlists.sh)
 
-You can combine this with spotify_uri_to_name.sh to see the duplicate track names eg. for a playlist called 'test':
+You can combine this with spotify_uri_to_name.sh to see the duplicate track names eg. for a playlist called 'My Playlist':
 
-${0##*/} test | spotify_uri_to_name.sh
+${0##*/} 'My Playlist' | spotify_uri_to_name.sh
 
-If \$SPOTIFY_DUPLICATE_TRACK_POSITIONS is set then also outputs the track position (zero-index to align with the Spotify API) as the first column with the URI as the second column
+If \$SPOTIFY_DUPLICATE_TRACK_POSITIONS is set then also outputs the track position (zero-indexed to align with the Spotify API) as the first column with the URI as the second column
 
 $usage_playlist_help
 
