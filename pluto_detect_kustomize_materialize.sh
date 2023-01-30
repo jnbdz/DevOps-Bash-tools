@@ -24,9 +24,13 @@ srcdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 usage_description="
 Recursively finds all Kustomizations and materializes the full resultant YAML in an adjacent file called kustomization.materialized.yaml in each directory
 
-Useful for checking the YAML with linting tools like FairwindsOps Pluto to detect deprecated API objects inherited from embedded Helm charts affecting your Kubernetes cluster upgrades
+The runs 'pluto detect-files -d .' in each directory to detect deprecated API objects inherited from embedded Helm charts affecting your Kubernetes cluster upgrades
 
 Parallelized for performance, with Helm support enabled, requires 'kustomize' binary to be in the \$PATH
+
+Workaround for this recursion issue in Pluto:
+
+    https://github.com/FairwindsOps/pluto/issues/444
 "
 
 # used by usage() in lib/utils.sh
@@ -40,8 +44,9 @@ max_args 1 "$@"
 
 dir="${1:-.}"
 
-kustomize_materialize(){
+pluto_detect_kustomize_materialize(){
     kustomization_path="$1"
+    echo "========================================"
     echo "$kustomization_path"
     pushd "$(dirname "$kustomization_path")" >/dev/null
     #if [[ "$kustomization" =~ ^eks- ]]; then
@@ -51,13 +56,14 @@ kustomize_materialize(){
     #fi
     kustomize build --enable-helm > "kustomization.materialized.yaml"
     echo "Materialized YAML -> $PWD/kustomization.materialized.yaml"
+    pluto detect-files -d .
     popd >/dev/null
-    echo
+    echo >&2
 }
-export -f kustomize_materialize
+export -f pluto_detect_kustomize_materialize
 
 find "$dir" -name kustomization.yaml |
 while read -r kustomization_path; do
-    echo "kustomize_materialize '$kustomization_path'"
+    echo "pluto_detect_kustomize_materialize '$kustomization_path'"
 done |
 parallel
