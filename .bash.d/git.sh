@@ -45,6 +45,7 @@ if type -P gh &>/dev/null; then
     autocomplete gh -s
 fi
 
+# shellcheck disable=SC1091
 type add_PATH &>/dev/null || . "$bash_tools/.bash.d/paths.sh"
 
 add_PATH ~/bin/codeql
@@ -158,8 +159,9 @@ git_root(){
 }
 
 gitgc(){
+    cd "$(git_root)" || :
     if ! [ -d .git ]; then
-        echo "not at top of a git repo, not .git/ directory found"
+        echo "not in a git repo, no .git/ directory and git root dir not found"
         return 1
     fi
     du -sh .git
@@ -167,36 +169,71 @@ gitgc(){
     du -sh .git
 }
 
-gitbrowse(){
+git_default_branch(){
+    git remote show origin |
+    #awk '/^[[:space:]]*HEAD branch:[[:space:]]/{print $3}'
+    sed -n '/HEAD branch/s/.*: //p'
+}
+
+git_url_base(){
     local filter="${1:-.*}"
+    git remote -v |
+    { grep "$filter" || : ; }|
+    awk '/git@|https:/{print $2}' |
+    head -n1 |
+    sed 's|^ssh://||;
+         s|^https://.*@||;
+         s|^https://||;
+         s/^git@ssh.dev.azure.com:v3/dev.azure.com/;
+         s|^git@||;
+         s|^|https://|;
+         s/\.git$//;' |
+    perl -pe 's/:(?!\/\/)/\//'
+}
+
+gitbrowse(){
+    local filter="${1:-origin}"
     local path="${2:-}"
     local url_base
-    url_base="$(git remote -v |
-                grep "$filter" |
-                grep origin |
-                awk '/git@|https:/{print $2}' |
-                head -n1 |
-                sed 's|^ssh://||;
-                     s|^https://.*@||;
-                     s|^https://||;
-                     s/^git@ssh.dev.azure.com:v3/dev.azure.com/;
-                     s|^git@||;
-                     s|^|https://|;
-                     s/\.git$//;' |
-                perl -pe 's/:(?!\/\/)/\//')"
-    if [[ "$url_base" =~ dev.azure.com ]]; then
-        url_base="${url_base%/*}/_git/${url_base##*/}"
+    url_base="$(git_url_base "$filter")"
+    if [ -z "$url_base" ] && [ "$filter" != origin ]; then
+        url_base="$(git_url_base "origin")"
     fi
     if [ -z "$url_base" ]; then
-        echo "git remote url not found for $filter"
+        echo "git remote url not found for filter '$filter' or 'origin'"
         return 1
     fi
     if [[ "$url_base" =~ github.com ]]; then
         if [ -n "$path" ]; then
             path="blob/master/$path"
+        else
+            path+="#readme"
+        fi
+    else
+        if [ -z "$path" ]; then
+            local default_branch
+            default_branch="$(git_default_branch)"
+        fi
+        if [[ "$url_base" =~ gitlab.com ]]; then
+            if [ -z "$path" ]; then
+                url_base+="/-/blob/$default_branch/README.md"
+            fi
+        elif [[ "$url_base" =~ dev.azure.com ]]; then
+            url_base="${url_base%/*}/_git/${url_base##*/}"
+            if [ -z "$path" ]; then
+                url_base+="?path=/README.md&_a=preview"
+            fi
+        elif [[ "$url_base" =~ bitbucket.org ]]; then
+            if [ -z "$path" ]; then
+                url_base+="/src/$default_branch/README.md"
+            fi
         fi
     fi
-    browser "$url_base/$path"
+    url="$url_base"
+    if [ -n "$path" ]; then
+        url+="/$path"
+    fi
+    browser "$url"
 }
 
 install_git_completion(){
@@ -959,7 +996,7 @@ git_rm_untracked(){
 foreachrepo(){
     local repolist="${REPOLIST:-$bash_tools/setup/repos.txt}"
     while read -r repo; do
-        eval "$@"
+        "$@"
     done < <(sed 's/#.*$//; s/.*://; /^[[:space:]]*$/d' "$repolist")
 }
 
