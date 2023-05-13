@@ -12,7 +12,7 @@
 #
 
 ---
-name: Trivy Filesystem Scan
+name: Trivy Docker Image Scan
 
 on:
   push:
@@ -48,5 +48,8 @@ jobs:
     # github.event.repository context not available in scheduled workflows
     #if: github.event.repository.fork == false
     if: github.repository_owner == 'HariSekhon'
-    name: Trivy Filesystem Scan
-    uses: HariSekhon/GitHub-Actions/.github/workflows/trivy_fs.yaml@master
+    name: Trivy Docker Image Scan
+    uses: HariSekhon/GitHub-Actions/.github/workflows/trivy.yaml@master
+    with:
+      docker_image: harisekhon/bash-tools
+      severity: ''
