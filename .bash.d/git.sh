@@ -46,9 +46,9 @@ if type -P gh &>/dev/null; then
 fi
 
 # shellcheck disable=SC1091
-type add_PATH &>/dev/null || . "$bash_tools/.bash.d/paths.sh"
+#type add_PATH &>/dev/null || . "$bash_tools/.bash.d/paths.sh"
 
-add_PATH ~/bin/codeql
+#add_PATH ~/bin/codeql
 
 # find out who your 'gh' CLI is authenticating as - useful if you have multiple Personal Access Tokens for different environments
 alias githubwhoami='github_api.sh /user | jq -r .login'
