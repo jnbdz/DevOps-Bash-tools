@@ -28,7 +28,8 @@ filelist="$(find "${1:-.}" -maxdepth 2 -type f -iname '*.pl' -o \
 set -o pipefail
 
 if [ -z "$filelist" ]; then
-    return 0 &>/dev/null || :
+    # shellcheck disable=SC2317
+    return 0 &>/dev/null ||
     exit 0
 fi
 
@@ -54,8 +55,8 @@ elif [ -n "${QUICK:-}" ]; then
 else
     max_len=0
     for x in $filelist; do
-        if [ ${#x} -gt $max_len ]; then
-            max_len=${#x}
+        if [ "${#x}" -gt "$max_len" ]; then
+            max_len="${#x}"
         fi
     done
     # to account for the semi colon

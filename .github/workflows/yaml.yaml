@@ -11,10 +11,16 @@
 #  https://www.linkedin.com/in/HariSekhon
 #
 
+# ============================================================================ #
+#                                    Y A M L
+# ============================================================================ #
+
+# Validate any YAML files found in the repo
+
 ---
 name: YAML
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - master
@@ -44,7 +50,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

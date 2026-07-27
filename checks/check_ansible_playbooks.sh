@@ -23,6 +23,7 @@ srcdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 filelist="$(find "${1:-.}" -type f -name '*playbook.y*ml' | sort)"
 
 if [ -z "$filelist" ]; then
+    # shellcheck disable=SC2317
     return 0 &>/dev/null ||
     exit 0
 fi
@@ -40,14 +41,16 @@ elif [ -n "${QUICK:-}" ]; then
 else
     if ! command -v ansible-lint &>/dev/null; then
         echo "ansible-lint not found in \$PATH, not running Ansible syntax checks"
-        return 0 &>/dev/null || exit 0
+        # shellcheck disable=SC2317
+        return 0 &>/dev/null ||
+        exit 0
     fi
     ansible-lint --version
     echo
     max_len=0
     for x in $filelist; do
-        if [ ${#x} -gt $max_len ]; then
-            max_len=${#x}
+        if [ "${#x}" -gt "$max_len" ]; then
+            max_len="${#x}"
         fi
     done
     # to account for the semi colon
@@ -68,7 +71,9 @@ else
                 echo
             fi
             if [ -z "${NOEXIT:-}" ]; then
-                return 1 &>/dev/null || exit 1
+                # shellcheck disable=SC2317
+                return 1 &>/dev/null ||
+                exit 1
             fi
         fi
         set -eo pipefail

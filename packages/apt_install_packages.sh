@@ -49,6 +49,7 @@ done
 
 echo "Installing Deb Packages"
 
+export NEEDRESTART_MODE=a
 export DEBIAN_FRONTEND=noninteractive
 
 #apt="apt"
@@ -59,17 +60,17 @@ if ! type "$apt" >/dev/null 2>&1; then
     exit 1
 fi
 
-opts=""
+opts="-o DPkg::Lock::Timeout=1200"
 if [ -f /.dockerenv ]; then
     echo "running inside docker, not installing recommended extra packages unless specified to save space"
-    opts="--no-install-recommends"
+    opts="$opts --no-install-recommends"
 fi
 if is_CI; then
     echo "running in CI quiet mode"
     opts="$opts -q"
     echo
     echo "/etc/apt/sources.list:"
-    cat /etc/apt/sources.list
+    cat /etc/apt/sources.list || :
     echo
     for x in /etc/apt/sources.list.d/*; do
         [ -f "$x" ] || continue
@@ -112,13 +113,19 @@ fi
 # uniq
 packages="$(echo "$packages" | tr ' ' ' \n' | sort -u | tr '\n' ' ')"
 
+echo
+echo "Packages to be installed:"
+echo
+echo "$packages" | tr ' ' '\n'
+echo
+
 # requires fuser which might not already be installed, catch-22 situation if wanting to use this for everything including bootstraps
 #"$srcdir/apt_wait.sh"
 
 # sudo set in lib/utils-bourne.sh
 # want splitting of $opts
 # shellcheck disable=SC2154,SC2086
-[ -n "${NO_UPDATE:-}" ] || $sudo "$apt" $opts update
+[ -n "${NO_UPDATE:-}" ] || $sudo "$apt" update $opts
 
 if [ -n "${NO_FAIL:-}" ]; then
     # shellcheck disable=SC2086

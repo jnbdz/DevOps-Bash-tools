@@ -30,6 +30,7 @@ srcdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #fi
 
 if [ -z "$filelist" ]; then
+    # shellcheck disable=SC2317
     return 0 &>/dev/null ||
     exit 0
 fi
@@ -60,8 +61,8 @@ echo
 
 export max_len=0
 for x in $filelist; do
-    if [ ${#x} -gt $max_len ]; then
-        max_len=${#x}
+    if [ "${#x}" -gt "$max_len" ]; then
+        max_len="${#x}"
     fi
 done
 # to account for the colon
@@ -75,12 +76,13 @@ check_xml(){
     result=$?
     set -eo pipefail
     # shellcheck disable=SC2181
-    if [ $result -eq 0 ]; then
+    if [ "$result" -eq 0 ]; then
         echo "OK" >&2
     else
         echo "FAILED" >&2
         if [ -z "${QUIET:-}" ]; then
             echo >&2
+            # shellcheck disable=SC2001
             sed "s|^|$filename: |" <<< "$output" >&2
             echo >&2
         fi

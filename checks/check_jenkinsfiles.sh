@@ -18,7 +18,7 @@ set -euo pipefail
 [ -n "${DEBUG:-}" ] && set -x
 srcdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=lib/utils.sh
+# shellcheck source=lib/utils.sh disable=SC1091
 . "$srcdir/lib/utils.sh"
 
 # shellcheck disable=SC2034,SC2154
@@ -52,10 +52,19 @@ help_usage "$@"
 
 #min_args 1 "$@"
 
-jenkinsfiles="$(find "${1:-.}" -maxdepth 3 -name '*Jenkinsfile*')"
+jenkinsfiles=()
 
-if [ -z "$jenkinsfiles" ]; then
-    return 0 &>/dev/null || :
+for arg in "${@:-.}"; do
+    if [ -d "$arg" ]; then
+        jenkinsfiles+=( "$(find "${1:-.}" -maxdepth 3 -name '*Jenkinsfile*' | grep -v -e '\.groovy$')" )
+    else
+        jenkinsfiles+=("$arg")
+    fi
+done
+
+if [ -z "${jenkinsfiles[*]}" ]; then
+    # shellcheck disable=SC2317
+    return 0 &>/dev/null ||
     exit 0
 fi
 

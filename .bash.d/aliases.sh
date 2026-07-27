@@ -41,6 +41,7 @@ alias bashrc='$EDITOR $bashrc && reload'
 alias bashrc2='$EDITOR $bashrc2 && reload'
 alias bashrclocal='$EDITOR $bashrc.local; reload'
 alias bashrc3=bashrclocal
+alias v='vim'
 alias vimrc='$EDITOR ~/.vimrc'
 alias screenrc='$EDITOR ~/.screenrc'
 alias aliases='$EDITOR $bashd/aliases.sh'
@@ -48,8 +49,11 @@ alias ae=aliases
 alias be=bashrc
 alias be2=bashrc2
 alias be3=bashrc3
-alias ve=vimrc
 alias se=screenrc
+alias ve=vimrc
+alias creds='$EDITOR ~/.env/creds'
+alias pbc=pbcopy
+alias pbp=pbpaste
 # keep emacs with no window, use terminal, not X, otherwise I'd run xemacs...
 #alias emacs="emacs -nw"
 #em(){ emacs "$@" ; }
@@ -87,12 +91,16 @@ alias grep='grep --color=auto'
 #alias envg="env | grep -i"
 alias dec="decomment.sh"
 
+alias dns='cat /etc/resolv.conf'
 alias hosts='sudo $EDITOR /etc/hosts'
+alias repos='$EDITOR $bash_tools/setup/repos.txt'
 
 alias path="echo \$PATH | tr ':' '\\n' | less"
 alias paths=path
 
 alias tmp="cd /tmp"
+
+alias mksupportdir="mkdir -v support-bundle-$(date '+%F_%H%M')"
 
 # not as compatible, better to call pypy explicitly or in #! line
 #if type -P pypy &>/dev/null; then
@@ -108,12 +116,16 @@ alias bt='sti bt; cd $bt'
 export bashd="$bash_tools/.bash.d"
 alias bashd='sti bashd; cd $bashd'
 
-#alias cleanshell='exec env - bash --rcfile /dev/null'
-alias cleanshell='exec env - bash --norc --noprofile'
+#alias cleanshell='env - bash --rcfile /dev/null'
+alias cleanshell='env - bash --norc --noprofile'
 alias newshell='exec bash'
 alias rr='newshell'
 
 alias record=script
+
+alias dl="BACKGROUND_VIDEO=1 youtube_download_video.sh"
+#alias vidopen="vidopen.sh"
+#alias vidopenplay="PLAY_VIDEO=1 vidopen.sh"
 
 alias l33tmode='welcome; retmode=on; echo l33tm0de on'
 alias leetmode=l33tmode
@@ -121,6 +133,7 @@ alias leetmode=l33tmode
 alias hist=history
 alias clhist='HISTSIZE=0; HISTSIZE=5000'
 alias nohist='unset HISTFILE'
+alias histgrep='history | grep'
 
 export LS_OPTIONS='-F'
 if is_mac; then
@@ -144,7 +157,7 @@ alias lR='ls -lRh $LS_OPTIONS'
 lw(){ ls -lh $LS_OPTIONS "$(type -P "$@")"; }
 
 # shellcheck disable=SC2086,SC2012
-lll(){ ls -l $LS_OPTIONS "$(readlink -f "${@:-.}")" | less -R; }
+lll(){ ls -l "$(readlink -f "${@:-.}")" | less -R; }
 
 alias cd..='cd ..'
 alias ..='cd ..'
@@ -184,6 +197,8 @@ export azure_devops=~/azure-devops
 alias github="sti github; cd '$github'";
 export work="$github/work"
 alias work="sti work; cd '$work'"
+
+alias btup="bt; u; cd -"
 
 export bitbucket=~/bitbucket
 alias bitb='cd $bitbucket'
@@ -237,8 +252,14 @@ done
 
 doc_alias(){
     local docpath="$1"
+    local prefix="${2:-d}"
     [ -f "$docpath" ] || return 1
     docfile="${docpath##*/}"
+    if ! [[ "$docfile" =~ \.(txt|md)$ ]]; then
+        if [[ "$docfile" =~ \. ]]; then
+            return 1
+        fi
+    fi
     # slows down shell creation, will drain battery
 #    if [ -L "$docpath" ]; then
 #        # brew install coreutils to get greadlink since Mac doesn't have readlink -f
@@ -256,12 +277,19 @@ doc_alias(){
     #    echo "WARNING: $docfile conflicts with existing alias, duplicate doc '$docfile' among ~/docs, ~/github/docs, ~/bitbucket/docs?"
     #    return
     #fi
+    local shortname="${docfile%.md}"
+    local shortname="${shortname%.txt}"
     # shellcheck disable=SC2139,SC2140
-    alias "d$docfile"="ti ${docpath##*/}; \$EDITOR $docpath"
+    alias "${prefix}${shortname}"="ti ${docpath##*/}; \$EDITOR $docpath"
 }
 
 for x in ~/docs/* "$github"/docs/* "$bitbucket"/docs/*; do
     doc_alias "$x" || :
+done
+
+alias know="knowledge"
+for x in ~/knowledge/* "$github"/knowledge/* "$bitbucket"/knowledge/*; do
+    doc_alias "$x" k || :
 done
 
 # ============================================================================ #
@@ -307,7 +335,7 @@ alias etc='cd $etc'
 
 alias distro='cat /etc/*release /etc/*version 2>/dev/null'
 alias trace=traceroute
-alias t='$EDITOR ~/tmp'
+alias t='$EDITOR ~/temp-notes.txt'
 # causes more problems than it solves on a slow machine missing the prompt
 #alias y=yes
 alias t2='$EDITOR ~/tmp2'
@@ -336,6 +364,9 @@ export desktop=~/Desktop
 export desk="$desktop"
 alias desktop='cd "$desktop"'
 alias desk=desktop
+
+export screenshots=~/Desktops/Screenshots
+alias screenshots='cd "$screenshots"'
 
 export bin=~/bin
 alias bin="cd $bin"
@@ -374,3 +405,6 @@ alias fluxmenu='$EDITOR ~/.fluxbox/mymenu'
 alias fme=fluxmenu
 alias mymenu=fluxmenu
 alias menu=mymenu
+
+# trigger script in ~/.config/mpv/scripts/delete-on-eof.lua to delete a video once it has been completely watched
+alias mpvd="MPV_DELETE_ON_EOF=1 mpv --speed=2"

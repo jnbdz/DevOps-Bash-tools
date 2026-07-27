@@ -19,15 +19,15 @@ srcdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # used by utils.sh usage()
 # shellcheck disable=SC2034
-usage_description="Runs curl with either Kerberos SpNego (if \$KRB5 is set) or
-a ram file descriptor using \$PASSWORD or \$TOKEN to avoid credentials being exposed via process list or command line logging
+usage_description="
+Runs curl with either Kerberos SpNego (if \$KRB5 is set) or a ram file descriptor using \$PASSWORD or \$TOKEN to avoid credentials being exposed via process list or command line logging
 
 Requires prefixing url with http:// or https:// to work on older versions of curl in order to parse hostname
 for constructing the authentication string to be specific to the host as using netrc default login doesn't always work
 "
 
 
-# shellcheck source=lib/utils.sh
+# shellcheck source=lib/utils.sh disable=SC1091
 . "$srcdir/lib/utils.sh"
 
 # used by utils.sh usage()
@@ -127,10 +127,13 @@ elif ! is_blank "${TOKEN:-${JWT_TOKEN:-}}"; then
     if is_curl_min_version 7.55; then
         # this trick doesn't work, file descriptor is lost by next line
         #filedescriptor=<(cat <<< "Private-Token: $GITLAB_TOKEN")
-        command curl -H @<(cat <<< "$auth_header") "$@"
+
+        # user_agent defined in lib/util.shs
+        # shellcheck disable=SC2154
+        command curl "${user_agent[@]}" -H @<(cat <<< "$auth_header") "$@"
     else
-        command curl -H "$auth_header" "$@"
+        command curl "${user_agent[@]}" -H "$auth_header" "$@"
     fi
 else
-    command curl --netrc-file <(cat <<< "$netrc_contents") "$@"
+    command curl "${user_agent[@]}" --netrc-file <(cat <<< "$netrc_contents") "$@"
 fi
